@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Leave Timetable — May 17–24</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f0e0d;
+    --paper: #faf8f4;
+    --cream: #f0ece2;
+    --rule: #d4cfc4;
+    --accent: #b5451b;
+    --ps3:  #b5451b;
+    --ed:   #2c5f8a;
+    --emft: #2e7d4f;
+    --tele: #7b3fa0;
+    --dip:  #c17d11;
+    --acc:  #8b2252;
+    --rev:  #444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 2rem 2.5rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .header-left h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .header-left p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+    opacity: 0.6;
+  }
+
+  .subject-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    justify-content: flex-end;
+    max-width: 380px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+
+  .legend-dot {
+    width: 9px; height: 9px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* DAY NAV */
+  .day-nav {
+    display: flex;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--rule);
+    background: var(--cream);
+    scrollbar-width: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .day-nav::-webkit-scrollbar { display: none; }
+
+  .day-tab {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 0.75rem 1.3rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #999;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+    transition: all 0.18s;
+    flex-shrink: 0;
+    line-height: 1.3;
+  }
+  .day-tab:hover { color: var(--ink); }
+  .day-tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+    background: var(--paper);
+  }
+  .day-tab .date-num {
+    display: block;
+    font-size: 1.25rem;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.1rem;
+  }
+
+  /* MAIN */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+  }
+
+  .day-panel { display: none; }
+  .day-panel.active { display: block; }
+
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--ink);
+  }
+  .day-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 900;
+  }
+  .day-header .day-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #999;
+  }
+
+  /* CHIPS */
+  .day-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1.5rem;
+  }
+  .chip {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.65rem;
+    border-radius: 20px;
+    border: 1px solid var(--rule);
+    background: var(--cream);
+    color: #555;
+  }
+
+  /* TIMELINE */
+  .timeline { display: flex; flex-direction: column; }
+
+  .slot {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    border-bottom: 1px solid var(--rule);
+  }
+  .slot:last-child { border-bottom: none; }
+
+  .slot-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.63rem;
+    letter-spacing: 0.04em;
+    color: #aaa;
+    padding: 0.85rem 0.75rem 0.85rem 0;
+    border-right: 1px solid var(--rule);
+    display: flex;
+    align-items: flex-start;
+    padding-top: 1rem;
+    line-height: 1.4;
+  }
+
+  .slot-content {
+    padding: 0.75rem 0 0.75rem 1rem;
+    display: flex;
+    align-items: stretch;
+  }
+
+  /* BREAK */
+  .break-row .slot-time { color: #ccc; }
+  .break-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: #bbb;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .break-label::before {
+    content: '';
+    display: inline-block;
+    width: 18px; height: 1px;
+    background: #ddd;
+  }
+
+  /* STUDY BLOCK */
+  .study-block {
+    width: 100%;
+    border-radius: 5px;
+    padding: 0.7rem 0.9rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .subj-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 0.22rem 0.5rem;
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: white;
+  }
+
+  .block-body { flex: 1; }
+  .block-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.35;
+    margin-bottom: 0.3rem;
+  }
+  .block-topics {
+    font-size: 0.78rem;
+    color: #555;
+    line-height: 1.5;
+  }
+  .block-topics li {
+    list-style: none;
+    padding-left: 1rem;
+    position: relative;
+    margin-bottom: 0.1rem;
+  }
+  .block-topics li::before {
+    content: '·';
+    position: absolute;
+    left: 0.2rem;
+    color: #bbb;
+  }
+
+  .block-note {
+    font-size: 0.7rem;
+    font-family: 'DM Mono', monospace;
+    color: #aaa;
+    margin-top: 0.35rem;
+    letter-spacing: 0.03em;
+  }
+
+  /* colour themes */
+  .bg-ps3  { background: #fff0ed; } .bg-ps3  .subj-badge { background: #b5451b; }
+  .bg-ed   { background: #edf4fb; } .bg-ed   .subj-badge { background: #2c5f8a; }
+  .bg-emft { background: #edf7f1; } .bg-emft .subj-badge { background: #2e7d4f; }
+  .bg-tele { background: #f5f0fa; } .bg-tele .subj-badge { background: #7b3fa0; }
+  .bg-dip  { background: #fdf8ed; } .bg-dip  .subj-badge { background: #c17d11; }
+  .bg-acc  { background: #fdf0f5; } .bg-acc  .subj-badge { background: #8b2252; }
+  .bg-rev  { background: #f2f2f2; } .bg-rev  .subj-badge { background: #444;    }
+
+  /* duration pill */
+  .dur-pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.05em;
+    color: #999;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 0.15rem 0.45rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding: 1.2rem 2.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    color: #bbb;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  @media (max-width: 600px) {
+    .slot { grid-template-columns: 80px 1fr; }
+    .slot-time { font-size: 0.57rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Study Leave<br>Timetable</h1>
+    <p>May 17 (Sun) – May 24 (Sun) · 8 Days · First-time learner paced</p>
+  </div>
+  <div>
+    <div class="subject-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#b5451b"></div>Power Systems 3</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2c5f8a"></div>Electric Drive</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2e7d4f"></div>EMFT</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#7b3fa0"></div>Telecom Engg</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#c17d11"></div>Dig. Image Proc.</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#8b2252"></div>Accountancy</div>
+    </div>
+  </div>
+</header>
+
+<div class="day-nav" id="dayNav"></div>
+<main><div id="panels"></div></main>
+<footer>
+  <span>6 Subjects · 36 Modules · 8 Days</span>
+  <span>May 17 = Sunday · May 24 = Sunday</span>
+  <span>Wake 7 AM · Sleep 12 AM</span>
+</footer>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+// Each slot: { time, type:'break'|'study', subj, title, topics:[], note, dur }
+const DAYS = [
+
+// ═══════════════════════════════════════════════════════════════
+// DAY 1 — Sunday May 17
+// Focus: PS3 M1+M2, EMFT M1, Accountancy M1
+// ═══════════════════════════════════════════════════════════════
+{
+  label:'Sunday', date:'May 17',
+  chips:['PS3 — M1 & M2 (Substations)', 'EMFT — M1 (Vector Analysis)', 'Accountancy — M1 (Basics)'],
+  slots:[
+    {time:'7:00–7:30',   type:'break', label:'Wake up · Freshen up · Morning routine'},
+    {time:'7:30–8:30',   type:'study', subj:'ps3', dur:'1 hr',
+      title:'PS3 — Module 1: Structure of Power Systems',
+      topics:['Structure of a Power System (generation → transmission → distribution)', 'Bulk Power Grids vs Micro Power Grids — differences & examples', 'Present-day scenario after Deregulation & Restructuring of power sector'],
+      note:'Light module — read carefully, draw a block diagram of power system structure'},
+    {time:'8:30–9:00',   type:'break', label:'Breakfast'},
+    {time:'9:00–10:15',  type:'study', subj:'ps3', dur:'1 hr 15 min',
+      title:'PS3 — Module 2 (Part 1): Substations',
+      topics:['Classification of substations (indoor, outdoor, underground, mobile)', 'Interconnection of substations — necessity and types', 'Functions & arrangement of substation equipment (transformers, CB, isolators, bus bars, CTs, PTs, surge arrestors)'],
+      note:'Draw a neat layout diagram of a typical outdoor substation'},
+    {time:'10:15–10:30', type:'break', label:'Short break · Stretch'},
+    {time:'10:30–12:00', type:'study', subj:'ps3', dur:'1 hr 30 min',
+      title:'PS3 — Module 2 (Part 2): Bus Bar Arrangements',
+      topics:['Selection criteria for bus bar arrangements', 'Single bus bar arrangement — SLD, merits, demerits', 'Duplicate (double) bus bar — SLD, switching flexibility', 'Sectionalized bus bar — why & when used', 'One-and-a-half CB arrangement — SLD, operation', 'Ring bus arrangement — SLD, advantages', 'Mesh bus arrangement — SLD, comparison table'],
+      note:'Draw each SLD from scratch — this is a very diagram-heavy topic'},
+    {time:'12:00–1:00',  type:'study', subj:'emft', dur:'1 hr',
+      title:'EMFT — Module 1: Vector Analysis',
+      topics:['Review of dot product and cross product with examples', 'Gradient of a scalar field — physical meaning', 'Divergence of a vector field — physical meaning', 'Curl of a vector field — physical meaning', 'Divergence theorem (Gauss) and Stoke\'s theorem — statement & geometric interpretation', 'Cartesian, Cylindrical & Spherical coordinate systems — notation & unit vectors', 'Transformation between coordinate systems', 'General curvilinear coordinates — gradient, divergence, curl expressions'],
+      note:'Module 1 is foundational — don\'t rush. Practice coordinate transformations with examples'},
+    {time:'1:00–1:30',   type:'break', label:'Lunch'},
+    {time:'1:30–2:30',   type:'study', subj:'acc', dur:'1 hr',
+      title:'Accountancy — Module 1 (Part 1): Fundamentals',
+      topics:['Concept & classification of accounts (Personal, Real, Nominal)', 'Transaction — definition and characteristics', 'Double Entry system of book keeping — concept', 'Golden rules of Debit and Credit (for each type of account)'],
+      note:'Practice Golden Rules with 10 sample transactions'},
+    {time:'2:30–3:00',   type:'break', label:'Personal time'},
+    {time:'3:00–4:30',   type:'study', subj:'acc', dur:'1 hr 30 min',
+      title:'Accountancy — Module 1 (Part 2): Journal, Ledger, Trial Balance',
+      topics:['Journal — definition, advantages, format, procedure of journalising', 'Practice journal entries with adjustments', 'Ledger — definition, advantages, rules regarding posting', 'Balancing of ledger accounts (Balance c/d and b/d)', 'Trial Balance — definition, objectives, procedure of preparation'],
+      note:'Do at least 5 full journal → ledger → trial balance exercises'},
+    {time:'4:30–5:00',   type:'study', subj:'ps3', dur:'30 min',
+      title:'PS3 — Module 2 (Part 3): Reactors & Grounding',
+      topics:['Current limiting reactors — types & construction (series, feeder, bus-tie)', 'Location of reactors in a substation', 'Substation grounding — purpose, methods'],
+      note:'Short section — complement with Module 2 revision'},
+    {time:'5:00–6:00',   type:'break', label:'Evening nap'},
+    {time:'6:00–6:30',   type:'break', label:'Evening tea break'},
+    {time:'6:30–8:00',   type:'study', subj:'emft', dur:'1 hr 30 min',
+      title:'EMFT — Module 2 (Part 1): The Static Electric Field',
+      topics:['Coulomb\'s Law — force between point charges, vector form', 'Electric Field Intensity E — definition, units', 'Field due to a point charge, a line charge (infinite & finite), and a sheet of charge', 'Field due to a continuous volume charge distribution', 'Electric Flux Density D — relation with E and permittivity'],
+      note:'Practice numerical problems for each charge distribution type'},
+    {time:'8:00–8:30',   type:'break', label:'Wind down · Personal'},
+    {time:'8:30–9:00',   type:'break', label:'Dinner'},
+    {time:'9:00–10:30',  type:'study', subj:'emft', dur:'1 hr 30 min',
+      title:'EMFT — Module 2 (Part 2): Gauss\'s Law & Potential',
+      topics:['Gauss\'s Law in integral form — statement & applications (spherical/cylindrical/planar symmetry)', 'Gauss\'s Law in differential form — Maxwell\'s 1st equation in electrostatics (∇·D = ρ)', 'Electrostatic potential difference & potential — definition', 'Potential expressed as line integral of E', 'Potential field of a point charge and a system of charges', 'Conservative property of electrostatic field', 'Potential gradient — relation E = −∇V', 'Electric dipole — potential & field', 'Energy density in electrostatic field'],
+      note:'Key derivations to memorize: Gauss\'s law applications, E = −∇V proof'},
+    {time:'10:30–11:00', type:'break', label:'Short break · Review notes made today'},
+    {time:'11:00–12:00', type:'break', label:'Personal time · Wind down · Sleep at 12:00'},
+  ]
+},
+
+// ═══════════════════════════════════════════════════════════════
+// DAY 2 — Monday May 18
+// Focus: PS3 M3 (heavy, 9L), Telecom M1+M2, Accountancy M2
+// ═══════════════════════════════════════════════════════════════
+{
+  label:'Monday', date:'May 18',
+  chips:['PS3 — M3 Fuses (Part 1)', 'Telecom — M1 Introduction', 'Accountancy — M2 Cash Book & BRS'],
+  slots:[
+    {time:'7:00–7:30',   type:'break', label:'Wake up · Freshen up · Morning routine'},
+    {time:'7:30–8:30',   type:'study', subj:'ps3', dur:'1 hr',
+      title:'PS3 — Module 3 (Part 1): Fuses',
+      topics:['Definition & function of a fuse', 'Important terms: fusing current, fusing factor, prospective current, cut-off current, pre-arcing time, arcing time, total operating time', 'Classification of fuses (rewirable, cartridge, HRC, drop-out, expulsion)', 'HRC (High Rupturing Capacity) fuses — construction, working principle', 'Characteristics of HRC fuses — time-current characteristics', 'Advantages of HRC fuses', 'Time delay fuses — need and working', 'Selection of fuses — factors to consider'],
+      note:'Draw time-current characteristic curve of HRC fuse carefully'},
+    {time:'8:30–9:00',   type:'break', label:'Breakfast'},
+    {time:'9:00–10:00',  type:'study', subj:'ps3', dur:'1 hr',
+      title:'PS3 — Module 3 (Part 2): Circuit Breaker Fundamentals',
+      topics:['Circuit breaker — definition & function', 'Principles of circuit breaking (interruption of fault current)', 'DC circuit breaking theory — why DC is harder to interrupt', 'AC circuit breaking theory — natural current zero, role of power factor', 'Arc voltage and current waveforms — sketching and analysis'],
+      note:'Sketch the arc voltage and recovery voltage waveforms clearly'},
+    {time:'10:00–10:15', type:'break', label:'Short break'},
+    {time:'10:15–11:45', type:'study', subj:'ps3', dur:'1 hr 30 min',
+      title:'PS3 — Module 3 (Part 3): Arc Interruption & Voltages',
+      topics:['Restriking voltage — definition, waveform, rate of rise (RRRV)', 'Recovery voltage — definition and difference from restriking voltage', 'Theories of arc interruption: (1) Energy balance theory (2) Voltage-current gradient theory', 'Phenomenon of current chopping — causes & effects', 'Capacitive current breaking — problem of voltage escalation', 'ACCB ratings — interrupting capacity, making current, breaking current, rated voltage'],
+      note:'These are high-weightage derivation/explanation topics — write notes in your own words'},
+    {time:'11:45–1:00',  type:'study', subj:'tele', dur:'1 hr 15 min',
+      title:'Telecom — Module 1: Introduction to Communication',
+      topics:['History of communication — milestones (telegraph, telephone, radio, satellite, internet)', 'Issues of noise in communication — why noise is unavoidable', 'Thermal noise (Johnson noise) — formula, derivation concept, properties', 'Shot noise — cause, formula', 'Concept of White Gaussian Noise (WGN) — flat PSD, Gaussian amplitude', 'Noise temperature — definition and significance', 'Noise bandwidth — definition', 'Noise figure — definition, formula, importance in amplifier chains'],
+      note:'Noise figure formula (Friis\'s formula) is important for numericals'},
+    {time:'1:00–1:30',   type:'break', label:'Lunch'},
+    {time:'1:30–2:30',   type:'study', subj:'acc', dur:'1 hr',
+      title:'Accountancy — Module 2 (Part 1): Cash Book',
+      topics:['Subsidiary Books — purpose and list', 'Cash Book — definition, advantages, objectives', 'Types of Cash Book: Single column, Double column (with bank), Triple column (with cash, bank, discount)', 'Preparation of Single column cash book with examples', 'Preparation of Double column cash book', 'Preparation of Triple column cash book — treatment of discount columns'],
+      note:'Practice 3 full cash book problems (one of each type)'},
+    {time:'2:30–3:00',   type:'break', label:'Personal time'},
+    {time:'3:00–4:30',   type:'study', subj:'ps3', dur:'1 hr 30 min',
+      title:'PS3 — Module 3 (Part 4): Types of Circuit Breakers',
+      topics:['Bulk Oil CB (BOCB) — construction, working, advantages & disadvantages', 'Minimum Oil CB (MOCB) — construction, comparison with BOCB', 'Air Break CB — construction, principle, arc chutes', 'Air Blast CB — types (axial, cross, radial blast), working, advantages', 'Vacuum CB — construction (interrupter), working, applications, advantages', 'SF6 CB — properties of SF6 gas, puffer type vs double pressure type, advantages', 'Testing of circuit breakers — type tests and routine tests'],
+      note:'Make a comparison table: all CB types vs parameters (medium, voltage range, interruption method)'},
+    {time:'4:30–5:00',   type:'study', subj:'acc', dur:'30 min',
+      title:'Accountancy — Module 2 (Part 2): Bank Reconciliation Statement',
+      topics:['Reasons of disagreement between Cash Book and Pass Book balance', 'Preparation of BRS — adjusted balance method', 'Practice 2 BRS problems'],
+      note:''},
+    {time:'5:00–6:00',   type:'break', label:'Evening nap'},
+    {time:'6:00–6:30',   type:'break', label:'Evening tea break'},
+    {time:'6:30–8:00',   type:'study', subj:'tele', dur:'1 hr 30 min',
+      title:'Telecom — Module 2 (Part 1): Amplitude Modulation',
+      topics:['Concept and need of modulation — why we modulate', 'AM-DSBFC (Double Sideband Full Carrier) — time domain, frequency domain, modulation index m', 'Power in AM-DSBFC signal — carrier & sideband power', 'AM-DSBSC (Suppressed Carrier) — generation, spectrum', 'SSB (Single Sideband) — USB vs LSB, advantages', 'Square Law Modulator — circuit, analysis, output expression'],
+      note:'Draw frequency spectrum for DSB-FC, DSB-SC, and SSB clearly'},
+    {time:'8:00–8:30',   type:'break', label:'Wind down · Personal'},
+    {time:'8:30–9:00',   type:'break', label:'Dinner'},
+    {time:'9:00–10:30',  type:'study', subj:'tele', dur:'1 hr 30 min',
+      title:'Telecom — Module 2 (Part 2): AM Detection & Circuits',
+      topics:['Switching Modulator — circuit and working', 'Square law demodulator — working principle', 'Envelope Detector — circuit, working, conditions for proper detection (avoid diagonal clipping & negative peak clipping)', 'Balanced Modulator — circuit for generating DSB-SC', 'Power spectra of AM — meaning and sketch'],
+      note:'Envelope detector design conditions are frequently asked in exams'},
+    {time:'10:30–11:00', type:'break', label:'Short break · Review today\'s notes'},
+    {time:'11:00–12:00', type:'break', label:'Personal time · Wind down · Sleep at 12:00'},
+  ]
+},
+
+// ═══════════════════════════════════════════════════════════════
+// DAY 3 — Tuesday May 19
+// Focus: EMFT M3, PS3 M4 (Part 1), ED M1, Telecom M3
+// ═══════════════════════════════════════════════════════════════
+{
+  label:'Tuesday', date:'May 19',
+  chips:['EMFT — M3 Static Magnetic Field', 'PS3 — M4 Protective Relays (Part 1)', 'ED — M1 Drive Dynamics', 'Telecom — M3 Angle Modulation (Part 1)'],
+  slots:[
+    {time:'7:00–7:30',   type:'break', label:'Wake up · Freshen up · Morning routine'},
+    {time:'7:30–8:30',   type:'study', subj:'emft', dur:'1 hr',
+      title:'EMFT — Module 3 (Part 1): Biot-Savart\'s Law & Ampere\'s Law',
+      topics:['Biot-Savart\'s Law — statement, mathematical form, physical interpretation', 'Magnetic field H due to a finite and infinite straight wire carrying current', 'Magnetic field due to a circular loop of current', 'Magnetic field due to distributed surface and volume currents', 'Ampere\'s Circuital Law — integral form, applications (infinite wire, solenoid, toroid)', 'Ampere\'s Law in differential form — Maxwell\'s curl equation: ∇×H = J'],
+      note:'Practice at least 3 Biot-Savart numerical problems — common in exams'},
+    {time:'8:30–9:00',   type:'break', label:'Breakfast'},
+    {time:'9:00–10:30',  type:'study', subj:'emft', dur:'1 hr 30 min',
+      title:'EMFT — Module 3 (Part 2): Magnetic Potentials & Forces',
+      topics:['Scalar magnetic potential Vm — definition, limitations (irrotational regions only)', 'Vector magnetic potential A — definition, relation with B (B = ∇×A)', 'Maxwell\'s Divergence equation for B: ∇·B = 0 — physical meaning', 'Steady magnetic field laws summary', 'Force on a moving charge in magnetic field (Lorentz)', 'Force on a current-carrying conductor in B field — F = IL×B', 'Force between two parallel current-carrying conductors', 'Torque on a current loop — derivation, magnetic dipole moment'],
+      note:'Understand the analogy between electric dipole and magnetic dipole'},
+    {time:'10:30–10:45', type:'break', label:'Short break'},
+    {time:'10:45–12:15', type:'study', subj:'ps3', dur:'1 hr 30 min',
+      title:'PS3 — Module 4 (Part 1): Protective Relays — Basics & Overcurrent',
+      topics:['Definition of protective relay and its role in power system protection', 'Terminology: pickup current, dropout current, plug setting, time setting multiplier, operating time, reset, reach', 'Functional characteristics: sensitivity, selectivity, speed, reliability, security', 'Universal relay torque equation — T = K1·I² + K2·V² + K3·VI·cos(θ−τ) + K4', 'Overcurrent relays — principle, types: Instantaneous, Definite Time, Inverse Time, IDMT', 'IDMT relay — characteristic curve, plug setting & time setting', 'Directional overcurrent relay — need, working, 90° & 60° connection'],
+      note:'Draw IDMT characteristic curve and understand how PSM and TSM affect operating time'},
+    {time:'12:15–1:00',  type:'study', subj:'ed', dur:'45 min',
+      title:'ED — Module 1 (Part 1): Drive Dynamics',
+      topics:['Classification of electric drives (individual, group, multi-motor)', 'Types of load — active & passive loads', 'Speed-torque characteristics of common loads: constant torque, fan/pump (T∝n²), constant power'],
+      note:''},
+    {time:'1:00–1:30',   type:'break', label:'Lunch'},
+    {time:'1:30–2:30',   type:'study', subj:'ed', dur:'1 hr',
+      title:'ED — Module 1 (Part 2): Motor-Load Dynamics',
+      topics:['Speed-torque characteristics of DC & AC motors', 'Selection of motor rating for a given load', 'Dynamics of motor-load combination — equation of motion: J(dω/dt) = T_m − T_L', 'Four-quadrant operation — motoring and braking in both directions', 'Moment of inertia — calculation for combined motor-load system', 'Stability of electric drives — stable & unstable equilibrium points on T-n curve'],
+      note:'Draw four-quadrant diagram and label motoring/braking/forward/reverse regions'},
+    {time:'2:30–3:00',   type:'break', label:'Personal time'},
+    {time:'3:00–4:30',   type:'study', subj:'tele', dur:'1 hr 30 min',
+      title:'Telecom — Module 3 (Part 1): Angle Modulation',
+      topics:['Angle modulation — PM and FM, instantaneous phase & frequency', 'Narrow Band FM (NBFM) — derivation, spectrum (similar to AM), bandwidth', 'Wide Band FM (WBFM) — Bessel function expansion, spectrum, Carson\'s rule for bandwidth', 'Transmission bandwidth of FM — Carson\'s rule: BW = 2(Δf + f_m)', 'Comparison: AM vs FM vs PM'],
+      note:'Bessel function table usage and modulation index β = Δf/f_m are must-know'},
+    {time:'4:30–5:00',   type:'study', subj:'tele', dur:'30 min',
+      title:'Telecom — Module 3 (Part 2): FM Generation',
+      topics:['Direct method of FM generation — VCO based, advantages, disadvantages', 'Indirect method (Armstrong method) — NBFM → multipliers → WBFM', 'Comparison of direct vs indirect methods'],
+      note:''},
+    {time:'5:00–6:00',   type:'break', label:'Evening nap'},
+    {time:'6:00–6:30',   type:'break', label:'Evening tea break'},
+    {time:'6:30–8:00',   type:'study', subj:'ps3', dur:'1 hr 30 min',
+      title:'PS3 — Module 4 (Part 2): Differential & Distance Relays',
+      topics:['Differential relay — operating principle (difference of currents), biased differential relay', 'Percentage bias differential relay — characteristic, why bias is needed', 'Distance (impedance) relay — operating principle, impedance seen by relay', 'Types of distance relays: Impedance, Reactance, Mho (Admittance) — comparisons', 'Reach of a distance relay — under-reach and over-reach', 'Three-zone distance protection for a transmission line — time-distance diagram'],
+      note:'Draw impedance, reactance, and mho relay characteristics on R-X diagram'},
+    {time:'8:00–8:30',   type:'break', label:'Wind down · Personal'},
+    {time:'8:30–9:00',   type:'break', label:'Dinner'},
+    {time:'9:00–10:30',  type:'study', subj:'tele', dur:'1 hr 30 min',
+      title:'Telecom — Module 3 (Part 3): FM Detection & Receivers',
+      topics:['Frequency Discrimination (slope detector / Foster-Seeley discriminator) — circuit and working', 'PLL demodulation — PLL block diagram, FM demodulation using PLL', 'Super Heterodyne Receiver — block diagram, IF stage, image frequency, image rejection', 'Frequency Division Multiplexing (FDM) — concept, block diagram, application'],
+      note:'Superheterodyne receiver block diagram is a very common exam question'},
+    {time:'10:30–11:00', type:'break', label:'Short break · Quick review'},
+    {time:'11:00–12:00', type:'break', label:'Personal time · Wind down · Sleep at 12:00'},
+  ]
+},
+
+// ═══════════════════════════════════════════════════════════════
+// DAY 4 — Wednesday May 20
+// Focus: PS3 M4 (Part 2 complete), EMFT M4, ED M2, Accountancy M3
+// ═══════════════════════════════════════════════════════════════
+{
+  label:'Wednesday', date:'May 20',
+  chips:['PS3 — M4 Protection Systems (Part 2)', 'EMFT — M4 Electromagnetic Field', 'ED — M2 Starting & Braking', 'Accountancy — M3 Final Accounts'],
+  slots:[
+    {time:'7:00–7:30',   type:'break', label:'Wake up · Freshen up · Morning routine'},
+    {time:'7:30–8:30',   type:'study', subj:'ps3', dur:'1 hr',
+      title:'PS3 — Module 4 (Part 3): System Protection Schemes',
+      topics:['Feeder protection — overcurrent & earth fault, pilot wire protection', 'Generator protection — differential protection (87G), overcurrent, earth fault, loss of excitation, reverse power', 'Transformer protection — differential relay (87T), Buchholz relay (gas actuated), overcurrent, earth fault'],
+      note:'Note why Buchholz relay is only used for oil-immersed transformers'},
+    {time:'8:30–9:00',   type:'break', label:'Breakfast'},
+    {time:'9:00–10:30',  type:'study', subj:'ps3', dur:'1 hr 30 min',
+      title:'PS3 — Module 4 (Part 4): Power Swing, Carrier Current & Static/Numerical Relays',
+      topics:['Power Swing — what is power swing, its effect on distance relays (unwanted tripping)', 'Power Swing Blocking (PSB) — how relay differentiates fault from power swing', 'Carrier current protection — principle, uses in pilot protection schemes', 'Comparators — amplitude & phase comparators, conversion between them', 'Static relays — operating principles (using analog circuits), types, advantages over electromagnetic', 'Block diagrams of static overcurrent, distance relay', 'Numerical relays — operating principle (sampling, DSP, algorithms), types, advantages', 'Block diagram of numerical relay'],
+      note:'Static and numerical relays comparison table is important for exam'},
+    {time:'10:30–10:45', type:'break', label:'Short break'},
+    {time:'10:45–12:15', type:'study', subj:'emft', dur:'1 hr 30 min',
+      title:'EMFT — Module 4 (Part 1): Faraday\'s Law & Displacement Current',
+      topics:['Faraday\'s Law — integral form: emf = −dΦ/dt, Lenz\'s law', 'Faraday\'s Law — differential form: ∇×E = −∂B/∂t (Maxwell\'s 1st curl equation for EM field)', 'Lorentz Force Equation — F = q(E + v×B), physical significance', 'Displacement current — Jd = ∂D/∂t, why Maxwell introduced it (inconsistency in Ampere\'s law)', 'Modified Ampere\'s Law — ∇×H = J + ∂D/∂t (Maxwell\'s 2nd curl equation)', 'Continuity equation — ∇·J = −∂ρ/∂t — derivation and physical meaning'],
+      note:'The concept of displacement current is conceptually very important — understand it fully'},
+    {time:'12:15–1:00',  type:'study', subj:'ed', dur:'45 min',
+      title:'ED — Module 2 (Part 1): Starting of Electric Motors',
+      topics:['Effect of starting on power supply (voltage dip), motor (thermal stress) and load', 'Starting methods for DC motors: armature resistance starter, 3-point & 4-point starters', 'Starting methods for Induction Motors: DOL, star-delta, autotransformer, rotor resistance (slip ring)', 'Automatic starting circuits: Time limit acceleration (using timers to short-circuit resistors step by step)', 'Current limit acceleration (using current relays)'],
+      note:'Draw star-delta starting circuit with voltages at each stage'},
+    {time:'1:00–1:30',   type:'break', label:'Lunch'},
+    {time:'1:30–2:30',   type:'study', subj:'acc', dur:'1 hr',
+      title:'Accountancy — Module 3 (Part 1): Trading Account',
+      topics:['Concept of Final Accounts — what they comprise', 'Trading Account — purpose (find Gross Profit/Loss)', 'Format of Trading Account (debit side: opening stock, purchases, direct expenses; credit side: sales, closing stock)', 'Adjustments in Trading Account: closing stock, goods returned, carriage inwards, manufacturing expenses', 'Preparation of Trading Account with 3 full examples'],
+      note:'Memorize the format first, then practice with examples'},
+    {time:'2:30–3:00',   type:'break', label:'Personal time'},
+    {time:'3:00–4:30',   type:'study', subj:'acc', dur:'1 hr 30 min',
+      title:'Accountancy — Module 3 (Part 2): P&L Account with Adjustments',
+      topics:['Profit & Loss Account — purpose (find Net Profit/Loss)', 'Format of P&L Account (indirect expenses on debit side, indirect incomes on credit side)', 'All standard adjustments: outstanding expenses, prepaid expenses, accrued income, income received in advance, bad debts, provision for bad debts, depreciation, discount on debtors', 'Complete problem: Trading Account + P&L Account with all 8 adjustments'],
+      note:'Adjustments entry rule: every adjustment has 2 effects (P&L + Balance Sheet)'},
+    {time:'4:30–5:00',   type:'study', subj:'ed', dur:'30 min',
+      title:'ED — Module 2 (Part 2): Energy Relations During Starting',
+      topics:['Energy stored in rotor and lost in resistance during starting', 'Energy loss in star-delta vs DOL starting — comparison', 'Reduction of energy loss during starting — strategies'],
+      note:''},
+    {time:'5:00–6:00',   type:'break', label:'Evening nap'},
+    {time:'6:00–6:30',   type:'break', label:'Evening tea break'},
+    {time:'6:30–8:00',   type:'study', subj:'emft', dur:'1 hr 30 min',
+      title:'EMFT — Module 4 (Part 2): Power Flow & Sinusoidal Fields',
+      topics:['Power flow in EM field — instantaneous power density', 'Poynting vector S = E×H — physical meaning, units, direction', 'Poynting theorem — integral and differential forms', 'Sinusoidally time varying fields — phasor representation of E and H', 'Maxwell\'s equations for sinusoidally time varying (time-harmonic) fields — phasor form', 'Power and energy considerations for time-harmonic fields — complex Poynting vector, real and reactive power', 'Retarded potentials — physical meaning (time delay due to finite speed of light)', 'Polarization of electromagnetic waves — linear, circular, elliptical'],
+      note:'Poynting theorem derivation is a standard exam question'},
+    {time:'8:00–8:30',   type:'break', label:'Wind down · Personal'},
+    {time:'8:30–9:00',   type:'break', label:'Dinner'},
+    {time:'9:00–10:30',  type:'study', subj:'ed', dur:'1 hr 30 min',
+      title:'ED — Module 2 (Part 3): Braking of Electric Motors',
+      topics:['Need for braking — controlled stop, emergency stop, holding load', 'Rheostatic braking (dynamic braking) — principle, circuit, speed-torque curve', 'Plugging (counter current braking) — principle, high energy dissipation, use cases', 'Regenerative braking — principle, condition for regeneration, energy saving advantage', 'Braking of Induction Motor — dynamic, plugging, regenerative', 'Speed-torque characteristic under each braking condition', 'Energy relations during braking — energy recovered vs dissipated'],
+      note:'Make a comparison table: Rheostatic vs Plugging vs Regenerative — quadrant, energy, speed-torque'},
+    {time:'10:30–11:00', type:'break', label:'Short break · Consolidate notes'},
+    {time:'11:00–12:00', type:'break', label:'Personal time · Wind down · Sleep at 12:00'},
+  ]
+},
+
+// ═══════════════════════════════════════════════════════════════
+// DAY 5 — Thursday May 21
+// Focus: PS3 M5 (heavy, 12L), EMFT M5+M6, DIP M1+M2, Accountancy M4
+// ═══════════════════════════════════════════════════════════════
+{
+  label:'Thursday', date:'May 21',
+  chips:['PS3 — M5 Overvoltage (Part 1)', 'EMFT — M5 & M6 Materials & Laplace', 'DIP — M1 & M2 Fundamentals & Enhancement', 'Accountancy — M4 Adjustments'],
+  slots:[
+    {time:'7:00–7:30',   type:'break', label:'Wake up · Freshen up · Morning routine'},
+    {time:'7:30–8:30',   type:'study', subj:'ps3', dur:'1 hr',
+      title:'PS3 — Module 5 (Part 1): Lightning & Switching Surges',
+      topics:['Lightning phenomena — mechanism of cloud charge formation, stepped leader, return stroke', 'Switching surges — cause (switching operations), characteristics, how they differ from lightning', 'Types of overvoltages — external (lightning) and internal (switching, ferroresonance)'],
+      note:'Draw lightning discharge mechanism diagram'},
+    {time:'8:30–9:00',   type:'break', label:'Breakfast'},
+    {time:'9:00–10:30',  type:'study', subj:'ps3', dur:'1 hr 30 min',
+      title:'PS3 — Module 5 (Part 2): Travelling Waves',
+      topics:['Concept of travelling waves — how surges travel on transmission lines', 'Wave equation — derivation from line L and C parameters', 'Shape and specification of travelling waves — wavefront, wavetail, standard 1.2/50 µs wave', 'Surge impedance Z₀ = √(L/C) — definition and significance', 'Velocity of propagation v = 1/√(LC)', 'Attenuation — power loss during travel, exponential decay', 'Distortion — change in waveshape during travel', 'Attenuation due to Corona — corona effect on travelling waves'],
+      note:'1.2/50 µs wave specification is standard — memorize and know what each number means'},
+    {time:'10:30–10:45', type:'break', label:'Short break'},
+    {time:'10:45–12:00', type:'study', subj:'ps3', dur:'1 hr 15 min',
+      title:'PS3 — Module 5 (Part 3): Wave Behavior at Transitions',
+      topics:['Behaviour at a line transition — open end, short circuit end, junction of two lines', 'Lattice diagram (Bewley\'s diagram) — construction and use', 'Reflection coefficient and refraction coefficient — derivation', 'Multiple reflections at junctions', 'Wave behaviour at a transformer terminal'],
+      note:'Lattice diagram problems are common in exams — practice 2 full examples'},
+    {time:'12:00–1:00',  type:'study', subj:'emft', dur:'1 hr',
+      title:'EMFT — Module 5: Materials & Fields',
+      topics:['Current and current density J — volume, surface, linear current density', 'Continuity equation ∇·J = −∂ρ/∂t', 'Conductor in an electric field — boundary conditions (E_t = 0, E_n = ρ_s/ε)', 'Dielectrics in electric field — polarization P, electric susceptibility χ_e, relative permittivity ε_r', 'Relation: D = ε₀E + P = ε₀ε_rE', 'Boundary conditions in perfect dielectrics — tangential and normal components', 'Magnetic materials — magnetization M, permeability μ, relation B = μ₀(H + M)', 'Boundary conditions for magnetic fields at material interface'],
+      note:'Boundary conditions for both E and H fields — very important for wave problems'},
+    {time:'1:00–1:30',   type:'break', label:'Lunch'},
+    {time:'1:30–2:30',   type:'study', subj:'acc', dur:'1 hr',
+      title:'Accountancy — Module 4: Provisions & Adjustments',
+      topics:['Capital Expenditure vs Revenue Expenditure — distinction, examples', 'Bad Debts — meaning, journal entry, treatment in P&L', 'Provision for Bad & Doubtful Debts — creation, increase/decrease, journal entries', 'Provision for Discount on Debtors — treatment', 'Outstanding Expenses — meaning, journal entry, effect on Final Accounts', 'Prepaid Expenses — meaning, journal entry, effect', 'Accrued Income — meaning, journal entry, effect', 'Income received in advance — meaning, treatment'],
+      note:'Write all 8 adjustment journal entries from memory — exam essential'},
+    {time:'2:30–3:00',   type:'break', label:'Personal time'},
+    {time:'3:00–4:30',   type:'study', subj:'dip', dur:'1 hr 30 min',
+      title:'DIP — Module 1: Fundamentals of Digital Image',
+      topics:['Human Visual System — structure of eye, photoreceptors (rods & cones)', 'Image perception — brightness, contrast, simultaneous contrast, Mach band effect', 'Monochrome and Colour vision models — RGB, HSI models', 'Image acquisition — sensors, camera model, digitization', 'Display devices — CRT, LCD, DLP', 'Video I/O devices — cameras, frame grabbers', 'Standard video formats — NTSC, PAL, SECAM', 'Image digitization — sampling and quantization', '2D signals and systems — 2D Fourier transform concept'],
+      note:'This is a conceptual module — focus on understanding rather than derivations'},
+    {time:'4:30–5:00',   type:'study', subj:'emft', dur:'30 min',
+      title:'EMFT — Module 6: Poisson\'s & Laplace\'s Equations',
+      topics:['Poisson\'s equation: ∇²V = −ρ/ε — derivation from Maxwell\'s equations', 'Laplace\'s equation: ∇²V = 0 — when and where it applies', 'Solution of 1D Laplace equation in Cartesian, Cylindrical, Spherical'],
+      note:''},
+    {time:'5:00–6:00',   type:'break', label:'Evening nap'},
+    {time:'6:00–6:30',   type:'break', label:'Evening tea break'},
+    {time:'6:30–8:00',   type:'study', subj:'emft', dur:'1 hr 30 min',
+      title:'EMFT — Module 6 (contd.): General Solutions & Method of Images',
+      topics:['General solution of Laplace\'s equation — separation of variables method (Cartesian)', 'Application: parallel plate capacitor, coaxial cylinder, concentric spheres', 'Method of Images — concept, image charge, application to point charge above a conducting plane', 'Finding E field and surface charge density using method of images'],
+      note:'Method of images problem with a point charge near a grounded plane is a classic exam problem'},
+    {time:'8:00–8:30',   type:'break', label:'Wind down · Personal'},
+    {time:'8:30–9:00',   type:'break', label:'Dinner'},
+    {time:'9:00–10:30',  type:'study', subj:'dip', dur:'1 hr 30 min',
+      title:'DIP — Module 2 (Part 1): Spatial Domain Enhancement',
+      topics:['Spatial domain enhancement — operations on pixels directly vs frequency domain', 'Histogram — definition, histogram of an image, equalization — algorithm and example', 'Histogram stretching (normalization) — concept', 'Spatial Filtering — smoothing filters (average, weighted average, median filter)', 'Sharpening filters — Laplacian sharpening, unsharp masking', 'Non-linear filters — max, min, median — when to use which'],
+      note:'Work through a numerical histogram equalization example step by step'},
+    {time:'10:30–11:00', type:'break', label:'Short break · Write key formulae'},
+    {time:'11:00–12:00', type:'break', label:'Personal time · Wind down · Sleep at 12:00'},
+  ]
+},
+
+// ═══════════════════════════════════════════════════════════════
+// DAY 6 — Friday May 22
+// Focus: PS3 M5 (complete), EMFT M7, ED M3+M4, DIP M2 (Part 2), Telecom M4
+// ═══════════════════════════════════════════════════════════════
+{
+  label:'Friday', date:'May 22',
+  chips:['PS3 — M5 Insulation Coordination & Arresters', 'EMFT — M7 EM Waves (Part 1)', 'ED — M3 Heating & M4 DC Drives', 'DIP — M2 Frequency Domain', 'Telecom — M4 Random Signals'],
+  slots:[
+    {time:'7:00–7:30',   type:'break', label:'Wake up · Freshen up · Morning routine'},
+    {time:'7:30–8:30',   type:'study', subj:'ps3', dur:'1 hr',
+      title:'PS3 — Module 5 (Part 4): Insulation Coordination',
+      topics:['Introduction to Insulation Coordination — meaning and need', 'Volt-time (V-t) curve — definition, how it\'s obtained, significance', 'BIL (Basic Insulation Level) — definition, standard values, factors affecting BIL', 'Coordination of system equipment — self-restoring vs non-self-restoring insulation', 'Insulation coordination procedure — conventional and statistical approaches'],
+      note:''},
+    {time:'8:30–9:00',   type:'break', label:'Breakfast'},
+    {time:'9:00–10:15',  type:'study', subj:'ps3', dur:'1 hr 15 min',
+      title:'PS3 — Module 5 (Part 5): Overvoltage Protection Devices',
+      topics:['Overvoltage protection — terms: protective level, protective ratio, coordination ratio', 'Ground wires (shield wires) — function, shielding angle, placement', 'Tower footing resistance — effect on back flashover, methods to reduce (counterpoises)', 'Counterpoises — buried conductors, their effect on lightning protection', 'Types of Lightning Arresters: (1) Rod gap (2) Horn gap (3) Oxide film (4) Expulsion type (5) Valve/Non-linear resistor type (metal oxide — MOA)', 'Surge absorbers (capacitor + resistor) — working, applications', 'Location and rating of lightning arresters — where to install, rating criteria'],
+      note:'MOA (Metal Oxide Arrester) is the modern standard — understand its V-I characteristic'},
+    {time:'10:15–10:30', type:'break', label:'Short break'},
+    {time:'10:30–12:00', type:'study', subj:'ed', dur:'1 hr 30 min',
+      title:'ED — Module 3: Heating, Rating & Mechanical Features',
+      topics:['Heating of motors — thermal model, heating time constant, temperature rise equation', 'Cooling of motors — cooling time constant, temperature fall after load removal', 'Loading conditions and classes of duty: S1(continuous), S2(short time), S3(intermittent), S4-S8', 'Power rating and selection of motors for continuous, short-time, and intermittent duty', 'Load inertia and load equalization — flywheel effect, GD²', 'Types of enclosures — ODP, TEFC, explosion-proof', 'Types of bearings — ball, roller, sleeve', 'Mountings — foot, flange, combined', 'Transmission of drive — direct coupling, belts, gears, chains', 'Reduction of noise — sources and methods'],
+      note:'Classes of duty (S1-S8) and heating/cooling equations are exam regulars'},
+    {time:'12:00–1:00',  type:'study', subj:'tele', dur:'1 hr',
+      title:'Telecom — Module 4: Random Signal Theory',
+      topics:['Random variable — definition, examples in communication', 'Cumulative Distribution Function (CDF) — properties, example', 'Probability Distribution Function (PDF) — relation with CDF, properties', 'Statistical averages — mean, mean square, variance, standard deviation', 'Normal (Gaussian) Distribution — PDF formula, mean, variance, standard normal', 'Standard deviation — physical interpretation, 1σ/2σ/3σ rule', 'Gaussian PDF — shape, area under curve, Q-function', 'Rayleigh PDF — formula, application to envelope of narrowband noise'],
+      note:'Gaussian and Rayleigh PDFs are used in digital communication performance analysis'},
+    {time:'1:00–1:30',   type:'break', label:'Lunch'},
+    {time:'1:30–2:30',   type:'study', subj:'dip', dur:'1 hr',
+      title:'DIP — Module 2 (Part 2): Frequency Domain Enhancement',
+      topics:['Frequency domain processing — 2D Fourier Transform concept', 'Ideal, Butterworth, Gaussian Low-pass and High-pass filters in frequency domain', 'Band-pass and Band-reject filters', 'Homomorphic filtering — concept (illumination-reflectance model), log domain processing, application'],
+      note:'Understand why Gaussian filters have no ringing (no sharp cutoff)'},
+    {time:'2:30–3:00',   type:'break', label:'Personal time'},
+    {time:'3:00–4:30',   type:'study', subj:'ed', dur:'1 hr 30 min',
+      title:'ED — Module 4 (Part 1): Multi-Quadrant DC Drive — Choppers',
+      topics:['Review of separately excited DC motor — motoring and generating modes, back EMF', 'Single-quadrant chopper — circuit, waveforms, average output voltage Vo = δ·Vs', 'Two-quadrant chopper — Type A (forward motoring + forward braking), circuit & operation', 'Four-quadrant chopper — combining choppers for all four quadrants', 'Steady-state operation of multi-quadrant chopper fed DC drive — current waveform, average torque'],
+      note:'Draw all four quadrants on T-n plane and mark which chopper operates in each'},
+    {time:'4:30–5:00',   type:'study', subj:'dip', dur:'30 min',
+      title:'DIP — Module 2 (Part 3): Image Restoration',
+      topics:['Unconstrained restoration — Inverse filter (straightforward but noise amplification problem)', 'Constrained (Wiener) restoration — minimizes MSE, handles noise, Wiener filter equation'],
+      note:''},
+    {time:'5:00–6:00',   type:'break', label:'Evening nap'},
+    {time:'6:00–6:30',   type:'break', label:'Evening tea break'},
+    {time:'6:30–8:00',   type:'study', subj:'emft', dur:'1 hr 30 min',
+      title:'EMFT — Module 7 (Part 1): Electromagnetic Waves',
+      topics:['EM wave equation — derivation from Maxwell\'s equations in source-free region', 'Helmholtz equation: ∇²E − γ²E = 0, where γ = propagation constant', 'Wave motion in free space — phase velocity, wavelength, intrinsic impedance η₀ = 377 Ω', 'General wave parameters — α (attenuation), β (phase constant), γ = α + jβ', 'Wave motion in perfect dielectric (lossless) — no attenuation, phase velocity changes', 'Wave motion in lossy dielectric — both attenuation and phase change, loss tangent'],
+      note:'Derive Helmholtz equation from scratch — it\'s a common long-answer question'},
+    {time:'8:00–8:30',   type:'break', label:'Wind down · Personal'},
+    {time:'8:30–9:00',   type:'break', label:'Dinner'},
+    {time:'9:00–10:30',  type:'study', subj:'ed', dur:'1 hr 30 min',
+      title:'ED — Module 4 (Part 2): DC Drive Control Design',
+      topics:['Control structure of DC drive — inner current loop + outer speed loop (cascade control)', 'Dynamic model of DC motor — differential equations for armature circuit and mechanical system', 'Transfer functions — from armature voltage to speed', 'Modeling of chopper — as a gain with a transport delay', 'Plant transfer function for current controller design', 'Current controller specification — bandwidth, overshoot, response time', 'PI current controller design — how to choose Kp and Ki', 'Speed controller specification — bandwidth (must be << current loop BW)', 'PI speed controller design'],
+      note:'Cascade control concept (inner loop faster than outer loop) is key to understand'},
+    {time:'10:30–11:00', type:'break', label:'Short break · Write summary'},
+    {time:'11:00–12:00', type:'break', label:'Personal time · Wind down · Sleep at 12:00'},
+  ]
+},
+
+// ═══════════════════════════════════════════════════════════════
+// DAY 7 — Saturday May 23
+// Focus: PS3 M6, EMFT M7 (Part 2), ED M5+M6, Telecom M5+M6, DIP M3, Accountancy M5
+// ═══════════════════════════════════════════════════════════════
+{
+  label:'Saturday', date:'May 23',
+  chips:['PS3 — M6 HVDC', 'EMFT — M7 Waves (Part 2)', 'ED — M5 IM Drives & M6 Sync/BLDC', 'Telecom — M5 & M6 Pulse & Digital', 'DIP — M3 Compression', 'Accountancy — M5 Depreciation'],
+  slots:[
+    {time:'7:00–7:30',   type:'break', label:'Wake up · Freshen up · Morning routine'},
+    {time:'7:30–8:30',   type:'study', subj:'ps3', dur:'1 hr',
+      title:'PS3 — Module 6: HVDC Transmission',
+      topics:['Limitations of HVAC transmission — reactive power, charging current, synchronism, cable charging', 'Advantages of HVDC: no reactive power issues, asynchronous interconnection, lower line losses for long distances, controllability', 'Limitations of HVDC: high cost of converter stations, harmonics, no HVDC transformers', 'Kinds of DC links: Monopolar, Bipolar, Homopolar links', 'Ground return — use and environmental concern', 'Equipment for HVDC: converters (thyristor bridges), smoothing reactors, AC & DC filters, control system', 'Applications of HVDC — HVDC projects in India (Rihand-Delhi, etc.)', 'High transmission voltages — advantages (reduced I²R loss, reduced conductor material) and limitations (insulation, corona)'],
+      note:'Short module — cover all points; good marks for structured written answers'},
+    {time:'8:30–9:00',   type:'break', label:'Breakfast'},
+    {time:'9:00–10:15',  type:'study', subj:'emft', dur:'1 hr 15 min',
+      title:'EMFT — Module 7 (Part 2): Propagation in Conductors & Reflection',
+      topics:['Propagation in good conductors — skin effect, skin depth δ = √(2/ωμσ)', 'Attenuation in conductors — high frequency effect, surface impedance', 'Plane wave reflection at normal incidence — on a perfect conductor and on a dielectric', 'Reflection and transmission coefficients — Γ and τ expressions', 'Standing wave ratio (SWR) — definition, formula', 'Oblique incidence — briefly: perpendicular and parallel polarization (Fresnel equations)'],
+      note:'Skin depth formula and its frequency dependence is frequently asked'},
+    {time:'10:15–10:30', type:'break', label:'Short break'},
+    {time:'10:30–11:15', type:'study', subj:'emft', dur:'45 min',
+      title:'EMFT — Module 7 (Part 3): Radiation of EM Waves',
+      topics:['Hertzian dipole — radiation from a short current element', 'Radiation fields — near field vs far field', 'Radiation resistance — definition', 'Radiation pattern of a Hertzian dipole (donut shape)', 'Concept of antenna gain and directivity (brief overview)'],
+      note:''},
+    {time:'11:15–1:00',  type:'study', subj:'tele', dur:'1 hr 45 min',
+      title:'Telecom — Module 5: Pulse Modulation & PCM',
+      topics:['PAM (Pulse Amplitude Modulation) — natural and flat-top sampling, spectrum', 'PPM (Pulse Position Modulation) — generation and detection', 'PWM (Pulse Width Modulation) — generation and detection', 'Sample and Hold circuit — operation, aperture effect', 'PCM — concept, why PCM, block diagram (sampler → quantizer → encoder)', 'Quantization — uniform quantization, quantization noise = q²/12', 'Encoding — number of bits n, levels L = 2ⁿ', 'PCM reconstruction — decoding and low-pass filtering', 'Non-uniform quantization — need (small signals treated fairly)', 'Companding — μ-law and A-law companding, curves', 'Signal-to-Quantization Noise Ratio — formula, dependence on n', 'Signaling formats — NRZ-L, NRZ-M, RZ, Biphase (Manchester)', 'Time Division Multiplexing (TDM) — frame structure, PCM-TDM system'],
+      note:'PCM is highly numerical — practice SNR calculation and bit rate = n × 2fm × channels'},
+    {time:'1:00–1:30',   type:'break', label:'Lunch'},
+    {time:'1:30–2:30',   type:'study', subj:'tele', dur:'1 hr',
+      title:'Telecom — Module 6: Digital Communication Systems',
+      topics:['ASK (Amplitude Shift Keying) — generation (product modulator), detection (envelope), BER', 'FSK (Frequency Shift Keying) — generation (2 oscillators), detection (discriminator), BER', 'PSK (Phase Shift Keying) — BPSK generation & coherent detection, constellation diagram', 'DPSK — differential encoding, non-coherent detection', 'Applications of Digital Communication Systems — mobile, satellite, internet'],
+      note:'Draw signal waveforms and constellation diagrams for each modulation scheme'},
+    {time:'2:30–3:00',   type:'break', label:'Personal time'},
+    {time:'3:00–4:15',   type:'study', subj:'ed', dur:'1 hr 15 min',
+      title:'ED — Module 5 (Part 1): Induction Motor Drives — Inverter & PWM',
+      topics:['Three-phase Voltage Source Inverter (VSI) — circuit topology, 180° conduction mode', 'Output voltage waveforms — line voltage, phase voltage, harmonic content', 'Generation of three-phase PWM signals — comparison of reference sinusoid with triangular carrier', 'Sinusoidal PWM — modulation index ma = Vref/Vtri, frequency ratio mf', 'PWM output spectrum — fundamental and switching harmonics'],
+      note:'Draw the PWM generation block diagram and output voltage waveform'},
+    {time:'4:15–5:00',   type:'study', subj:'acc', dur:'45 min',
+      title:'Accountancy — Module 5: Depreciation Accounting',
+      topics:['Meaning of depreciation — definition, need', 'Causes of depreciation — wear & tear, obsolescence, depletion, time', 'Factors affecting depreciation — cost, residual value, useful life', 'Straight Line Method (SLM) — formula, example, journal entries, advantages & disadvantages', 'Written Down Value Method (WDV/DBM) — formula, example, comparison with SLM', 'Sum of Years Digit Method — concept', 'Units of Production Method — concept', 'Treatment in Final Accounts'],
+      note:'Practice 2 full depreciation problems: one SLM, one WDV'},
+    {time:'5:00–6:00',   type:'break', label:'Evening nap'},
+    {time:'6:00–6:30',   type:'break', label:'Evening tea break'},
+    {time:'6:30–8:00',   type:'study', subj:'ed', dur:'1 hr 30 min',
+      title:'ED — Module 5 (Part 2): IM Speed Control Methods',
+      topics:['Stator voltage control — V/f (Volts per Hertz) control — maintaining air gap flux constant', 'PWM speed control of IM — how inverter output frequency controls speed', 'Rotor resistance control — external resistance in rotor circuit (slip ring IM), effect on speed-torque curve', 'Static control of rotor resistance using DC chopper — variable resistance effect electronically', 'Static Krammer drive — sub-synchronous speed control, energy recovery to supply', 'Scherbius drive — super and sub-synchronous speed control', 'Introduction to Vector (Field Oriented) Control — concept of decoupling flux and torque'],
+      note:'V/f control and its limitations at low frequency are important concepts'},
+    {time:'8:00–8:30',   type:'break', label:'Wind down · Personal'},
+    {time:'8:30–9:00',   type:'break', label:'Dinner'},
+    {time:'9:00–10:30',  type:'study', subj:'ed', dur:'1 hr 30 min',
+      title:'ED — Module 6: Synchronous Motor & BLDC Drives',
+      topics:['Speed control of 3-phase Synchronous Motor — why it needs special starting', 'True synchronous mode — fixed frequency supply, no speed control', 'Self-controlled mode — inverter frequency tracks rotor position (no hunting)', 'PMSM (Permanent Magnet Synchronous Motor) — principle, sinusoidal flux distribution', 'PMSM types: surface mounted, interior permanent magnet', 'BLDC motor — principle (trapezoidal BEMF), comparison with PMSM', 'BLDC drive scheme — Hall sensor-based commutation, 6-step operation', 'Converter topologies for BLDC — 3-phase bridge inverter with gate drive'],
+      note:'BLDC vs PMSM comparison table is a frequent exam question'},
+    {time:'10:30–11:00', type:'break', label:'Short break · Review all of today\'s notes'},
+    {time:'11:00–12:00', type:'break', label:'Personal time · Wind down · Sleep at 12:00'},
+  ]
+},
+
+// ═══════════════════════════════════════════════════════════════
+// DAY 8 — Sunday May 24 — FULL REVISION DAY
+// ═══════════════════════════════════════════════════════════════
+{
+  label:'Sunday', date:'May 24',
+  chips:['Complete Revision Day', 'All 6 Subjects', 'Formula Sheets', 'Previous Year Questions'],
+  slots:[
+    {time:'7:00–7:30',   type:'break', label:'Wake up · Freshen up · Morning routine'},
+    {time:'7:30–8:30',   type:'study', subj:'rev', dur:'1 hr',
+      title:'REVISION — Power Systems 3 (All 6 Modules)',
+      topics:['M1-M2: Power system structure, Substation types, Bus bar SLDs — redraw from memory', 'M3: CB comparison table (Oil/Air/Vacuum/SF6), Arc interruption theories, ACCB ratings', 'M4: Relay torque equation, IDMT curve, R-X diagram for distance relays, Buchholz relay', 'M5: Travelling wave formula sheet, Reflection/Refraction coefficients, MOA V-I curve, BIL', 'M6: HVDC advantages vs HVAC, monopolar/bipolar links'],
+      note:'Focus on diagrams and formulae — write, don\'t just read'},
+    {time:'8:30–9:00',   type:'break', label:'Breakfast'},
+    {time:'9:00–10:00',  type:'study', subj:'rev', dur:'1 hr',
+      title:'REVISION — EMFT (All 7 Modules)',
+      topics:['M1: Coordinate transforms — practice one example each', 'M2: Gauss\'s law applications, E=−∇V, energy density formula', 'M3: Biot-Savart problems, force on conductor, torque on loop', 'M4: All 4 Maxwell\'s equations — write from memory (differential & integral form)', 'M5: Boundary conditions table (E and H at interfaces)', 'M6: Laplace\'s equation solutions, method of images problem', 'M7: Helmholtz equation, skin depth, plane wave reflection coefficients'],
+      note:'Write all Maxwell\'s equations one final time from scratch'},
+    {time:'10:00–10:15', type:'break', label:'Short break'},
+    {time:'10:15–11:15', type:'study', subj:'rev', dur:'1 hr',
+      title:'REVISION — Telecom Engineering (All 6 Modules)',
+      topics:['M1: Noise figure formula, Friis formula for cascaded stages', 'M2: AM modulation index, power formula, spectrum diagrams', 'M3: Carson\'s rule, β = Δf/fm, Bessel table, superheterodyne block diagram', 'M4: Gaussian and Rayleigh PDF — sketch and key parameters', 'M5: PCM SNR formula, TDM bit rate calculation, companding curves', 'M6: ASK/FSK/PSK — waveforms and constellation diagrams'],
+      note:'Solve 2 numericals from M2, M3 and M5 each'},
+    {time:'11:15–1:00',  type:'study', subj:'rev', dur:'1 hr 45 min',
+      title:'REVISION — Digital Image Processing (All 6 Modules)',
+      topics:['M1: Eye structure, RGB vs HSI, sampling & quantization', 'M2: Histogram equalization algorithm — do one full example, Wiener filter equation', 'M3: Huffman coding — build a Huffman tree for given probabilities; DCT basis — why used in JPEG', 'M4: Erosion & dilation examples, opening vs closing use cases', 'M5: Sobel operator masks, Hough transform for lines — explain ρ-θ space', 'M6: Chain code for a given boundary, shape descriptors definitions'],
+      note:'DIP has many diagram-based answers — practice writing structured answers'},
+    {time:'1:00–1:30',   type:'break', label:'Lunch'},
+    {time:'1:30–2:30',   type:'study', subj:'rev', dur:'1 hr',
+      title:'REVISION — Electric Drive (All 6 Modules)',
+      topics:['M1: Four-quadrant diagram, stability concept on T-n curve', 'M2: Star-delta starting ratios, IDMT relay (wait, wrong subject!) — braking methods comparison table', 'M3: Classes of duty S1-S8, heating time constant equation', 'M4: Chopper duty cycle formula, cascade control structure, PI controller design steps', 'M5: V/f control, static Krammer drive — energy flow diagram', 'M6: BLDC commutation sequence, PMSM vs BLDC differences'],
+      note:'Draw chopper waveforms and control block diagram from memory'},
+    {time:'2:30–3:00',   type:'break', label:'Personal time'},
+    {time:'3:00–4:00',   type:'study', subj:'rev', dur:'1 hr',
+      title:'REVISION — Accountancy (All 5 Modules)',
+      topics:['M1: Golden rules — write all 3, practice 5 journal entries', 'M2: BRS — prepare one BRS from scratch', 'M3: Trading + P&L Account format with all 8 standard adjustments', 'M4: Provision for bad debts journal — creation, increase, decrease entries', 'M5: SLM vs WDV problem — one each'],
+      note:'Accountancy is mostly numerical — solve, don\'t just read'},
+    {time:'4:00–5:00',   type:'study', subj:'rev', dur:'1 hr',
+      title:'Weak Topics & Pending Doubts',
+      topics:['Revisit any topic marked as unclear or skipped during the week', 'Clear conceptual doubts — re-read the specific section in notes', 'Anything you couldn\'t finish during the 7 study days'],
+      note:'Don\'t panic — even covering 80% well is very good preparation'},
+    {time:'5:00–6:00',   type:'break', label:'Evening nap'},
+    {time:'6:00–6:30',   type:'break', label:'Evening tea break'},
+    {time:'6:30–8:00',   type:'study', subj:'rev', dur:'1 hr 30 min',
+      title:'Formula Sheets & Quick Notes Consolidation',
+      topics:['Write a 1-page formula sheet for each subject (max 6 pages total)', 'Key diagrams to memorize: Substation SLDs, T-n curves, Maxwell\'s eq, EM wave equations, AM/FM spectra, JPEG block diagram, Chopper waveforms', 'Note down any mnemonics or memory tricks you\'ve developed'],
+      note:'These formula sheets are what you\'ll glance at just before the exam'},
+    {time:'8:00–8:30',   type:'break', label:'Wind down · Personal'},
+    {time:'8:30–9:00',   type:'break', label:'Dinner'},
+    {time:'9:00–10:00',  type:'study', subj:'rev', dur:'1 hr',
+      title:'Previous Year Question Papers — Quick Scan',
+      topics:['Skim previous year papers for all subjects', 'Map each question to the module it comes from', 'Mark high-frequency topics (usually 2–3 questions per topic across years)', 'Verify you have studied everything that appears frequently'],
+      note:'Don\'t solve full answers now — just identify patterns and hot topics'},
+    {time:'10:00–11:00', type:'break', label:'Relax · Light reading · No heavy study'},
+    {time:'11:00–12:00', type:'break', label:'Personal time · Wind down · Sleep well — you are ready! 🎓'},
+  ]
+},
+];
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function buildNav(){
+  const nav = document.getElementById('dayNav');
+  DAYS.forEach((day,i)=>{
+    const btn = document.createElement('button');
+    btn.className='day-tab'+(i===0?' active':'');
+    btn.dataset.idx=i;
+    const d = day.date.split(' ')[1];
+    btn.innerHTML=`<span class="date-num">${d}</span>${day.label.slice(0,3)}`;
+    btn.addEventListener('click',()=>switchDay(i));
+    nav.appendChild(btn);
+  });
+}
+
+function buildPanels(){
+  const container = document.getElementById('panels');
+  DAYS.forEach((day,i)=>{
+    const panel = document.createElement('div');
+    panel.className='day-panel'+(i===0?' active':'');
+    panel.id='panel-'+i;
+
+    const hdr=`<div class="day-header">
+      <h2>${day.label}</h2>
+      <span class="day-meta">${day.date}, 2026</span>
+    </div>`;
+
+    const chips=day.chips.map(c=>`<span class="chip">${c}</span>`).join('');
+    const chipsDiv=`<div class="day-chips">${chips}</div>`;
+
+    const slots=day.slots.map(slot=>{
+      if(slot.type==='break'){
+        return `<div class="slot break-row">
+          <div class="slot-time">${slot.time}</div>
+          <div class="slot-content"><span class="break-label">${slot.label}</span></div>
+        </div>`;
+      }
+      const topics=(slot.topics||[]).map(t=>`<li>${t}</li>`).join('');
+      const note=slot.note?`<div class="block-note">📌 ${slot.note}</div>`:'';
+      const dur=slot.dur?`<span class="dur-pill">${slot.dur}</span>`:'';
+      return `<div class="slot">
+        <div class="slot-time">${slot.time}</div>
+        <div class="slot-content">
+          <div class="study-block bg-${slot.subj}">
+            <span class="subj-badge">${slot.subj.toUpperCase()}</span>
+            <div class="block-body">
+              <div class="block-title">${slot.title}${dur}</div>
+              <ul class="block-topics">${topics}</ul>
+              ${note}
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    panel.innerHTML=hdr+chipsDiv+`<div class="timeline">${slots}</div>`;
+    container.appendChild(panel);
+  });
+}
+
+function switchDay(idx){
+  document.querySelectorAll('.day-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+  document.querySelectorAll('.day-panel').forEach((p,i)=>p.classList.toggle('active',i===idx));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+buildNav();
+buildPanels();
+</script>
+</body>
+</html>
